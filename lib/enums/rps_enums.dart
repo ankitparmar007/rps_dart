@@ -1,9 +1,19 @@
-enum RPSEnum {
+enum RPSInputEnum {
   rock('Rock', 1),
   paper('Paper', 2),
   scissors('Scissors', 3);
 
-  const RPSEnum(this.name, this.value);
+  const RPSInputEnum(this.name, this.value);
+  final String name;
+  final int value;
+}
+
+enum WSResponseEnum {
+  playerCount('Player Count', 1),
+  result('Result', 2),
+  error('Error', 2);
+
+  const WSResponseEnum(this.name, this.value);
   final String name;
   final int value;
 }
