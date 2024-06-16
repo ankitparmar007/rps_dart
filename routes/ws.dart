@@ -66,14 +66,17 @@ JoinUserRequestModel? findOpponent(String id) {
 
 Future<Response> onRequest(RequestContext context) async {
   final handler = webSocketHandler((channel, protocol) {
-    final id = context.request.uri.queryParameters['id'] ?? '';
+    // final id = context.request.uri.queryParameters['id'] ?? '';
     final name = context.request.uri.queryParameters['name'] ?? '';
+    final id = channel.hashCode.toString();
 
-    if (id.isEmpty || name.isEmpty) {
+    print("id $id");
+
+    if (name.isEmpty) {
       sendMessage(
         channel: channel,
         status: false,
-        message: 'id and name are required in query parameters.',
+        message: 'name is required in query parameters.',
         type: WSResponseEnum.error,
       );
       channel.sink.close();
@@ -183,8 +186,11 @@ Future<Response> onRequest(RequestContext context) async {
       onDone: () {
         players.remove(id);
         sendUserCounts();
+        print("onDone ${id}");
       },
-      onError: (error) {},
+      onError: (error) {
+        print("onError ${error.toString()}");
+      },
     );
   });
   return handler(context);
