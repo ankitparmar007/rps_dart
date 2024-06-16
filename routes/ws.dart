@@ -8,24 +8,27 @@ import 'package:rps/models/player_input_request_model.dart';
 
 Map<String, JoinUserRequestModel> players = {};
 
-// JoinUserRequestModel selectWinner({
-//   required JoinUserRequestModel player1,
-//   required JoinUserRequestModel player2,
-// }) {
-//   if (player1.input == RPSEnum.rock && player2.input == RPSEnum.scissors) {
-//     return player1;
-//   }
+JoinUserRequestModel selectWinner({
+  required JoinUserRequestModel player1,
+  required JoinUserRequestModel player2,
+}) {
+  if (player1.input == RPSInputEnum.rock &&
+      player2.input == RPSInputEnum.scissors) {
+    return player1;
+  }
 
-//   if (player1.input == RPSEnum.scissors && player2.input == RPSEnum.paper) {
-//     return player1;
-//   }
+  if (player1.input == RPSInputEnum.scissors &&
+      player2.input == RPSInputEnum.paper) {
+    return player1;
+  }
 
-//   if (player1.input == RPSEnum.paper && player2.input == RPSEnum.rock) {
-//     return player1;
-//   }
+  if (player1.input == RPSInputEnum.paper &&
+      player2.input == RPSInputEnum.rock) {
+    return player1;
+  }
 
-//   return player2;
-// }
+  return player2;
+}
 
 void sendMessage({
   required bool status,
@@ -66,6 +69,28 @@ Future<Response> onRequest(RequestContext context) async {
     final id = context.request.uri.queryParameters['id'] ?? '';
     final name = context.request.uri.queryParameters['name'] ?? '';
 
+    if (id.isEmpty || name.isEmpty) {
+      sendMessage(
+        channel: channel,
+        status: false,
+        message: 'id and name are required in query parameters.',
+        type: WSResponseEnum.error,
+      );
+      channel.sink.close();
+      return;
+    }
+
+    if (players.containsKey(id)) {
+      sendMessage(
+        channel: channel,
+        status: false,
+        message: 'id already exists. Please use a different id.',
+        type: WSResponseEnum.error,
+      );
+      channel.sink.close();
+      return;
+    }
+
     final user = JoinUserRequestModel(
       id: id,
       name: name,
@@ -78,58 +103,74 @@ Future<Response> onRequest(RequestContext context) async {
       (message) {
         try {
           final playerInput = playerInputRequestModelFromJson(message);
-          var player = players[id]!;
-          player = player.copyWith(input: playerInput.input);
-          players[id] = player;
+          var player1 = players[id]!;
+          player1 = player1.copyWith(input: playerInput.input);
+          players[id] = player1;
 
-          final opponent = findOpponent(id);
+          final player2 = findOpponent(id);
 
-          // if (player1.input == player2.input) {
-          //   sendMessage(
-          //     channel: player1.channel!,
-          //     status: true,
-          //     message: 'Tie againts ${player1.name}',
-          //     type: WSResponseEnum.result,
-          //   );
-          //   sendMessage(
-          //     channel: player2.channel!,
-          //     status: true,
-          //     message: 'Tie againts ${player2.name}',
-          //     type: WSResponseEnum.result,
-          //   );
-          // } else {
-          //   final winner = selectWinner(player1: player1, player2: player2);
-          //   if (winner.hashcode == player1.hashcode) {
-          //     sendMessage(
-          //       channel: player1.channel!,
-          //       status: true,
-          //       message: 'You won. againts ${player2.name}',
-          //       type: WSResponseEnum.result,
-          //     );
-          //     sendMessage(
-          //       channel: player2.channel!,
-          //       status: true,
-          //       message: 'You lost. againts ${player1.name}',
-          //       type: WSResponseEnum.result,
-          //     );
-          //   } else {
-          //     sendMessage(
-          //       channel: player1.channel!,
-          //       status: true,
-          //       message: 'You lost. againts ${player2.name}',
-          //       type: WSResponseEnum.result,
-          //     );
-          //     sendMessage(
-          //       channel: player2.channel!,
-          //       status: true,
-          //       message: 'You won. againts ${player1.name}',
-          //       type: WSResponseEnum.result,
-          //     );
-          //   }
-          // }
+          if (player2 == null) return;
 
-          // player1.channel!.sink.close();
-          // player2.channel!.sink.close();
+          if (player1.input == player2.input) {
+            sendMessage(
+              channel: player1.channel,
+              status: true,
+              message: 'Tie againts ${player2.name}',
+              type: WSResponseEnum.result,
+            );
+            sendMessage(
+              channel: player2.channel,
+              status: true,
+              message: 'Tie againts ${player1.name}',
+              type: WSResponseEnum.result,
+            );
+          } else {
+            final winner = selectWinner(player1: player1, player2: player2);
+            if (winner.id == player1.id) {
+              sendMessage(
+                channel: player1.channel,
+                status: true,
+                message: 'You won. againts ${player2.name}',
+                type: WSResponseEnum.result,
+              );
+              sendMessage(
+                channel: player2.channel,
+                status: true,
+                message: 'You lost. againts ${player1.name}',
+                type: WSResponseEnum.result,
+              );
+            } else {
+              sendMessage(
+                channel: player1.channel,
+                status: true,
+                message: 'You lost. againts ${player2.name}',
+                type: WSResponseEnum.result,
+              );
+              sendMessage(
+                channel: player2.channel,
+                status: true,
+                message: 'You won. againts ${player1.name}',
+                type: WSResponseEnum.result,
+              );
+            }
+          }
+
+          ///reseting inputs
+          final player1Reset = JoinUserRequestModel(
+            id: player1.id,
+            name: player1.name,
+            channel: player1.channel,
+          );
+          players[player1.id] = player1Reset;
+          // print('player1Reset: ${players[player1Reset.id]?.toJson()}');
+
+          final player2Reset = JoinUserRequestModel(
+            id: player2.id,
+            name: player2.name,
+            channel: player2.channel,
+          );
+          players[player2.id] = player2Reset;
+          // print('player2Reset: ${players[player2Reset.id]?.toJson()}');
         } catch (e) {
           sendMessage(
             channel: channel,

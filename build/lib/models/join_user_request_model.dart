@@ -4,10 +4,8 @@
 
 import 'dart:convert';
 
-import 'package:dart_frog/dart_frog.dart';
 import 'package:dart_frog_web_socket/dart_frog_web_socket.dart';
-
-import '../enums/rps_enums.dart';
+import 'package:rps/enums/rps_enums.dart';
 
 JoinUserRequestModel joinUserRequestModelFromJson(String str) =>
     JoinUserRequestModel.fromJson(json.decode(str));
@@ -18,48 +16,43 @@ String joinUserRequestModelToJson(JoinUserRequestModel data) =>
 class JoinUserRequestModel {
   final String id;
   final String name;
-  final RPSEnum input;
-  final WebSocketChannel? channel;
-  final String? hashcode;
-
+  final WebSocketChannel channel;
+  final RPSInputEnum? input;
   JoinUserRequestModel({
     required this.id,
     required this.name,
-    required this.input,
-     this.channel,
-    this.hashcode,
+    required this.channel,
+    this.input,
   });
 
   factory JoinUserRequestModel.fromJson(Map<String, dynamic> json) =>
       JoinUserRequestModel(
-        id: json["id"],
-        name: json["name"],
-        input: RPSEnum.values
-            .firstWhere((element) => element.value == json["input"]),
-        channel: json["channel"],
-        hashcode: json["hashcode"],
+        id: json['id'],
+        name: json['name'],
+        channel: json['channel'],
+        input: json['input'] == null
+            ? null
+            : RPSInputEnum.values
+                .firstWhere((element) => element.value == json['input']),
       );
 
   Map<String, dynamic> toJson() => {
-        "id": id,
-        "name": name,
-        "input": input,
-        "channel": channel,
-        "hashcode": hashcode,
+        'id': id,
+        'name': name,
+        'channel': channel,
+        'input': input?.value,
       };
 
   JoinUserRequestModel copyWith({
-    String? id,
     String? name,
-    RPSEnum? input,
     WebSocketChannel? channel,
-    String? hashcode,
+    String? id,
+    RPSInputEnum? input,
   }) =>
       JoinUserRequestModel(
-        id: id ?? this.id,
         name: name ?? this.name,
-        input: input ?? this.input,
         channel: channel ?? this.channel,
-        hashcode: hashcode ?? this.hashcode,
+        id: id ?? this.id,
+        input: input ?? this.input,
       );
 }
